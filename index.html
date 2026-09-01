@@ -21,19 +21,19 @@
         <h2>Login / Sign Up</h2>
         <input type="email" id="email" placeholder="Email">
         <input type="password" id="password" placeholder="Password">
-        <button type="button" id="signup-btn">Sign Up</button>
-        <button type="button" id="signin-btn">Log In</button>
+        <button onclick="signUp()">Sign Up</button>
+        <button onclick="signIn()">Log In</button>
         <p id="auth-msg"></p>
     </div>
 
     <!-- App Section -->
     <div id="app-section" class="card hidden">
         <h2>Register Your Cat</h2>
-        <p>Welcome, <span id="user-email"></span> | <button type="button" id="signout-btn" style="width:auto; padding:5px 10px;">Log Out</button></p>
+        <p>Welcome, <span id="user-email"></span> | <button onclick="signOut()" style="width:auto; padding:5px 10px;">Log Out</button></p>
         <input type="text" id="cat-name" placeholder="Cat's Name">
         <input type="number" id="cat-age" placeholder="Cat's Age">
         <input type="text" id="cat-prefs" placeholder="Preferences (e.g., pate, wet food, veggies)">
-        <button type="button" id="addcat-btn">Save Cat Profile</button>
+        <button onclick="addCat()">Save Cat Profile</button>
         
         <h3>Your Cats</h3>
         <ul id="cat-list"></ul>
@@ -42,10 +42,10 @@
     <script>
         const SUPABASE_URL = 'YOUR_SUPABASE_URL';
         const SUPABASE_KEY = 'sb_publishable_8QmhG3rlDpQM1wabaOeoRA_Ly7j1Q2n';
-        const client = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        const db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
         async function checkUser() {
-            const { data: { session } } = await client.auth.getSession();
+            const { data: { session } } = await db.auth.getSession();
             if (session) {
                 document.getElementById('auth-section').classList.add('hidden');
                 document.getElementById('app-section').classList.remove('hidden');
@@ -60,7 +60,7 @@
         async function signUp() {
             const email = document.getElementById('email').value;
             const password = document.getElementById('password').value;
-            const { error } = await client.auth.signUp({ email, password });
+            const { error } = await db.auth.signUp({ email, password });
             if (error) {
                 document.getElementById('auth-msg').innerText = error.message;
             } else {
@@ -71,7 +71,7 @@
         async function signIn() {
             const email = document.getElementById('email').value;
             const password = document.getElementById('password').value;
-            const { error } = await client.auth.signInWithPassword({ email, password });
+            const { error } = await db.auth.signInWithPassword({ email, password });
             if (error) {
                 document.getElementById('auth-msg').innerText = error.message;
             } else {
@@ -80,7 +80,7 @@
         }
 
         async function signOut() {
-            await client.auth.signOut();
+            await db.auth.signOut();
             checkUser();
         }
 
@@ -89,7 +89,7 @@
             const age = parseInt(document.getElementById('cat-age').value);
             const preferences = document.getElementById('cat-prefs').value;
 
-            const { error } = await client.from('cats').insert([{ name, age, preferences }]);
+            const { error } = await db.from('cats').insert([{ name, age, preferences }]);
             if (error) {
                 alert('Error: ' + error.message);
             } else {
@@ -101,7 +101,7 @@
         }
 
         async function loadCats() {
-            const { data, error } = await client.from('cats').select('*');
+            const { data, error } = await db.from('cats').select('*');
             const list = document.getElementById('cat-list');
             list.innerHTML = '';
             if (data) {
@@ -112,12 +112,6 @@
                 });
             }
         }
-
-        // Attach event listeners safely after DOM loads
-        document.getElementById('signup-btn').addEventListener('click', signUp);
-        document.getElementById('signin-btn').addEventListener('click', signIn);
-        document.getElementById('signout-btn').addEventListener('click', signOut);
-        document.getElementById('addcat-btn').addEventListener('click', addCat);
 
         checkUser();
     </script>
