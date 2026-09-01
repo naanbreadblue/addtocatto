@@ -42,10 +42,12 @@
     <script>
         const SUPABASE_URL = 'YOUR_SUPABASE_URL';
         const SUPABASE_KEY = 'sb_publishable_8QmhG3rlDpQM1wabaOeoRA_Ly7j1Q2n';
-        const db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        
+        // Use 'sb' instead of 'supabase' to avoid naming conflicts
+        const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
         async function checkUser() {
-            const { data: { session } } = await db.auth.getSession();
+            const { data: { session } } = await sb.auth.getSession();
             if (session) {
                 document.getElementById('auth-section').classList.add('hidden');
                 document.getElementById('app-section').classList.remove('hidden');
@@ -60,7 +62,7 @@
         async function signUp() {
             const email = document.getElementById('email').value;
             const password = document.getElementById('password').value;
-            const { error } = await db.auth.signUp({ email, password });
+            const { error } = await sb.auth.signUp({ email, password });
             if (error) {
                 document.getElementById('auth-msg').innerText = error.message;
             } else {
@@ -71,7 +73,7 @@
         async function signIn() {
             const email = document.getElementById('email').value;
             const password = document.getElementById('password').value;
-            const { error } = await db.auth.signInWithPassword({ email, password });
+            const { error } = await sb.auth.signInWithPassword({ email, password });
             if (error) {
                 document.getElementById('auth-msg').innerText = error.message;
             } else {
@@ -80,7 +82,7 @@
         }
 
         async function signOut() {
-            await db.auth.signOut();
+            await sb.auth.signOut();
             checkUser();
         }
 
@@ -89,7 +91,7 @@
             const age = parseInt(document.getElementById('cat-age').value);
             const preferences = document.getElementById('cat-prefs').value;
 
-            const { error } = await db.from('cats').insert([{ name, age, preferences }]);
+            const { error } = await sb.from('cats').insert([{ name, age, preferences }]);
             if (error) {
                 alert('Error: ' + error.message);
             } else {
@@ -101,7 +103,7 @@
         }
 
         async function loadCats() {
-            const { data, error } = await db.from('cats').select('*');
+            const { data, error } = await sb.from('cats').select('*');
             const list = document.getElementById('cat-list');
             list.innerHTML = '';
             if (data) {
