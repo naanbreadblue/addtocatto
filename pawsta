@@ -2,20 +2,112 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>My TikTok Shop</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cat Profile & Food Preference Tracker</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        body { font-family: Arial, sans-serif; text-align: center; padding: 50px; background: #f4f4f4; }
-        .product { background: white; padding: 20px; border-radius: 8px; display: inline-block; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-        .btn { background: #fe2c55; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; font-weight: bold; display: inline-block; margin-top: 15px;}
+        body { font-family: Arial, sans-serif; max-width: 600px; margin: 40px auto; padding: 20px; background: #f9f9f9; }
+        .card { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        input, button { width: 100%; padding: 10px; margin: 8px 0; box-sizing: border-box; }
+        button { background: #ff6b6b; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; }
+        button:hover { background: #ff5252; }
+        .hidden { display: none; }
     </style>
 </head>
 <body>
 
-    <div class="product">
-        <h2>My Favorite Product</h2>
-        <p>Check out this item on TikTok Shop!</p>
-        <a class="btn" href="YOUR_TIKTOK_LINK_HERE" target="_blank">View on TikTok</a>
+    <!-- Auth Section -->
+    <div id="auth-section" class="card">
+        <h2>Login / Sign Up</h2>
+        <input type="email" id="email" placeholder="Email">
+        <input type="password" id="password" placeholder="Password">
+        <button onclick="signUp()">Sign Up</button>
+        <button onclick="signIn()">Log In</button>
+        <p id="auth-msg"></p>
     </div>
 
+    <!-- App Section -->
+    <div id="app-section" class="card hidden">
+        <h2>Register Your Cat</h2>
+        <p>Welcome, <span id="user-email"></span> | <button onclick="signOut()" style="width:auto; padding:5px 10px;">Log Out</button></p>
+        <input type="text" id="cat-name" placeholder="Cat's Name">
+        <input type="number" id="cat-age" placeholder="Cat's Age">
+        <input type="text" id="cat-prefs" placeholder="Preferences (e.g., pate, wet food, veggies)">
+        <button onclick="addCat()">Save Cat Profile</button>
+        
+        <h3>Your Cats</h3>
+        <ul id="cat-list"></ul>
+    </div>
+
+    <script>
+        const SUPABASE_URL = 'YOUR_SUPABASE_URL';
+        const SUPABASE_KEY = 'sb_publishable_8QmhG3rlDpQM1wabaOeoRA_Ly7j1Q2n';
+        const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        async function checkUser() {
+            const { data: { session } } = await supabase.auth.getSession();
+            if (session) {
+                document.getElementById('auth-section').classList.add('hidden');
+                document.getElementById('app-section').classList.remove('hidden');
+                document.getElementById('user-email').innerText = session.user.email;
+                loadCats();
+            } else {
+                document.getElementById('auth-section').classList.remove('hidden');
+                document.getElementById('app-section').classList.add('hidden');
+            }
+        }
+
+        async function signUp() {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const { error } = await supabase.auth.signUp({ email, password });
+            if (error) document.getElementById('auth-msg').innerText = error.message;
+            else alert('Check your email for the confirmation link, or log in if confirmation is disabled.');
+        }
+
+        async function signIn() {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const { error } = await supabase.auth.signInWithPassword({ email, password });
+            if (error) document.getElementById('auth-msg').innerText = error.message;
+            else checkUser();
+        }
+
+        async function signOut() {
+            await supabase.auth.signOut();
+            checkUser();
+        }
+
+        async function addCat() {
+            const name = document.getElementById('cat-name').value;
+            const age = parseInt(document.getElementById('cat-age').value);
+            const preferences = document.getElementById('cat-prefs').value;
+
+            const { error } = await supabase.from('cats').insert([{ name, age, preferences }]);
+            if (error) {
+                alert('Error: ' + error.message);
+            } else {
+                document.getElementById('cat-name').value = '';
+                document.getElementById('cat-age').value = '';
+                document.getElementById('cat-prefs').value = '';
+                loadCats();
+            }
+        }
+
+        async function loadCats() {
+            const { data, error } = await supabase.from('cats').select('*');
+            const list = document.getElementById('cat-list');
+            list.innerHTML = '';
+            if (data) {
+                data.forEach(cat => {
+                    const li = document.createElement('li');
+                    li.innerText = `${cat.name} (Age: ${cat.age}) - Likes: ${cat.preferences}`;
+                    list.appendChild(li);
+                });
+            }
+        }
+
+        checkUser();
+    </script>
 </body>
 </html>
